@@ -4,6 +4,15 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-05-29
+
+### Added
+- Binder nodes now display the binder's non-binding serialized fields (e.g. `WidgetBinder.widget`,
+  `SpawnPrefabBinder`'s prefab/container config) as editable `PropertyField`s in a collapsible
+  "Fields" foldout in the node body, bound to the component with full drawer support, Undo, and live
+  Inspector sync. `BindingInfo` fields remain ports and are not duplicated. The foldout is collapsed
+  by default and its open/closed state is remembered per binder.
+
 ## [0.1.0] - 2026-05-29
 
 ### Added

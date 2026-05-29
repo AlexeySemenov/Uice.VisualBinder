@@ -106,6 +106,37 @@ namespace Uice.VisualBinder.Editor
             }
         }
 
+        /// <summary>
+        /// Top-level serialized field names of a binder whose type is <see cref="BindingInfo"/> or
+        /// <see cref="BindingInfoList"/>. These are rendered as ports, so node bodies skip them.
+        /// </summary>
+        public static HashSet<string> GetBindingFieldNames(Component binder)
+        {
+            var names = new HashSet<string>();
+            Type type = binder.GetType();
+
+            while (type != null && type != typeof(ComponentBinder) && type != typeof(MonoBehaviour))
+            {
+                foreach (FieldInfo field in type.GetFields(FieldFlags))
+                {
+                    if (!IsSerialized(field))
+                    {
+                        continue;
+                    }
+
+                    if (typeof(BindingInfo).IsAssignableFrom(field.FieldType) ||
+                        typeof(BindingInfoList).IsAssignableFrom(field.FieldType))
+                    {
+                        names.Add(field.Name);
+                    }
+                }
+
+                type = type.BaseType;
+            }
+
+            return names;
+        }
+
         /// <summary>Reads the currently-bound (viewModel, propertyName) for a slot, if any.</summary>
         public static bool TryGetBinding(Component binder, string propertyPath, out ViewModelComponent viewModel, out string propertyName)
         {

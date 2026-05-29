@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using Mace;
 using Mace.Utils;
+using UnityEditor;
 using UnityEditor.Experimental.GraphView;
+using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Uice.VisualBinder.Editor
 {
@@ -239,6 +242,9 @@ namespace Uice.VisualBinder.Editor
         /// <summary>Input ports keyed by the BindingInfo serialized property path.</summary>
         public Dictionary<string, Port> PortsByPath { get; } = new Dictionary<string, Port>();
 
+        /// <summary>Kept alive so the bound PropertyFields in the node body keep updating.</summary>
+        private SerializedObject serializedObject;
+
         public BinderNode(Component binder)
         {
             Binder = binder;
@@ -252,8 +258,78 @@ namespace Uice.VisualBinder.Editor
                 AddSlotPort(slot);
             }
 
+            BuildFieldsBody();
+
             RefreshExpandedState();
             RefreshPorts();
+        }
+
+        /// <summary>
+        /// Renders the binder's non-binding serialized fields as editable PropertyFields inside a
+        /// collapsible "Fields" foldout (collapsed by default; its state is remembered per binder).
+        /// </summary>
+        private void BuildFieldsBody()
+        {
+            serializedObject = new SerializedObject(Binder);
+            HashSet<string> bindingFields = BindingReflection.GetBindingFieldNames(Binder);
+
+            var foldout = new Foldout { text = "Fields", value = LoadFieldsExpanded() };
+
+            int added = 0;
+            SerializedProperty iterator = serializedObject.GetIterator();
+            if (iterator.NextVisible(true))
+            {
+                do
+                {
+                    if (iterator.propertyPath == "m_Script" || bindingFields.Contains(iterator.name))
+                    {
+                        continue;
+                    }
+
+                    foldout.Add(new PropertyField(iterator.Copy()));
+                    added++;
+                }
+                while (iterator.NextVisible(false));
+            }
+
+            if (added == 0)
+            {
+                return;
+            }
+
+            // Only the foldout's own toggle should persist state — ignore bubbled events from
+            // child bool fields (e.g. Toggle PropertyFields) which also raise ChangeEvent<bool>.
+            foldout.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.target == foldout)
+                {
+                    SaveFieldsExpanded(evt.newValue);
+                }
+            });
+
+            extensionContainer.Add(foldout);
+            extensionContainer.Bind(serializedObject);
+        }
+
+        private string FieldsPrefKey()
+        {
+            string key = VisualBinderLayoutStore.GetKey(Binder);
+            return string.IsNullOrEmpty(key) ? null : "UiceVisualBinder.FieldsExpanded." + key;
+        }
+
+        private bool LoadFieldsExpanded()
+        {
+            string key = FieldsPrefKey();
+            return key != null && EditorPrefs.GetBool(key, false);
+        }
+
+        private void SaveFieldsExpanded(bool expanded)
+        {
+            string key = FieldsPrefKey();
+            if (key != null)
+            {
+                EditorPrefs.SetBool(key, expanded);
+            }
         }
 
         private void AddSlotPort(BindingSlot slot)
