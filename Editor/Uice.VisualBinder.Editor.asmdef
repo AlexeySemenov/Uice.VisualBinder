@@ -1,0 +1,21 @@
+{
+    "name": "Uice.VisualBinder.Editor",
+    "rootNamespace": "Uice.VisualBinder.Editor",
+    "references": [
+        "Mace.Runtime",
+        "Mace.Editor",
+        "Uice.Runtime",
+        "Uice.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

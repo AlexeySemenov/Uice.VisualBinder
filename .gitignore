@@ -1,0 +1,5 @@
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# NOTE: .meta files are intentionally NOT ignored — Unity packages require them.
