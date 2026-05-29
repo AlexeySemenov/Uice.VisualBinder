@@ -307,6 +307,8 @@ namespace Uice.VisualBinder.Editor
                 }
             });
 
+            // Opaque body so expanded fields stay readable when the node overlaps another one.
+            extensionContainer.style.backgroundColor = new Color(0.22f, 0.22f, 0.22f, 1f);
             extensionContainer.Add(foldout);
             extensionContainer.Bind(serializedObject);
         }

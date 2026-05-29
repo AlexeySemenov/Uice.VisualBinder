@@ -4,6 +4,14 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-05-29
+
+### Fixed
+- The expandable "Fields" body in binder nodes now has an opaque background, so it stays readable
+  when a node overlaps another instead of showing the node behind it.
+- Expanding a previously-collapsed group no longer piles all its member nodes on top of each other;
+  members are restored to their original positions.
+
 ## [0.4.0] - 2026-05-29
 
 ### Added

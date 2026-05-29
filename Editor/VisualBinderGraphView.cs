@@ -415,6 +415,17 @@ namespace Uice.VisualBinder.Editor
 
             if (!group.Collapsed)
             {
+                // Remember exact member positions before hiding them, so expand can restore them.
+                bool dirty = false;
+                foreach (Node member in group.MemberNodes)
+                {
+                    dirty |= PersistNodePosition(member);
+                }
+                if (dirty)
+                {
+                    layout?.Save();
+                }
+
                 Rect groupPos = group.GetPosition();
                 group.Collapsed = true;
                 RefreshCollapsedView();
@@ -425,12 +436,9 @@ namespace Uice.VisualBinder.Editor
             }
             else
             {
-                Rect proxyPos = proxyNodesById.TryGetValue(groupId, out GroupProxyNode proxy)
-                    ? proxy.GetPosition()
-                    : group.GetPosition();
                 group.Collapsed = false;
                 RefreshCollapsedView();
-                group.SetPosition(proxyPos);
+                RestoreMemberPositions(group); // Group.SetPosition would otherwise pile members on one spot
             }
 
             SaveGroup(group);
@@ -604,6 +612,27 @@ namespace Uice.VisualBinder.Editor
             }
 
             return map;
+        }
+
+        /// <summary>Re-applies each member node's saved position after an expand (Group.SetPosition piles them up).</summary>
+        private void RestoreMemberPositions(CollapsibleGroup group)
+        {
+            if (layout == null)
+            {
+                return;
+            }
+
+            foreach (Node member in group.MemberNodes)
+            {
+                if (member is IComponentNode componentNode)
+                {
+                    string key = VisualBinderLayoutStore.GetKey(componentNode.Component);
+                    if (!string.IsNullOrEmpty(key) && layout.TryGet(key, out Rect rect))
+                    {
+                        member.SetPosition(rect);
+                    }
+                }
+            }
         }
 
         private void OnElementsAddedToGroup(Group group, IEnumerable<GraphElement> elements)
