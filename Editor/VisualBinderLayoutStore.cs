@@ -54,6 +54,9 @@ namespace Uice.VisualBinder.Editor
             return GlobalObjectId.GetGlobalObjectIdSlow(obj).ToString();
         }
 
+        /// <summary>True when no node positions have been stored for this root yet (fresh hierarchy).</summary>
+        public bool IsEmpty => positions.Count == 0;
+
         public bool TryGet(string key, out Rect rect)
         {
             return positions.TryGetValue(key, out rect);

@@ -27,6 +27,9 @@ namespace Uice.VisualBinder.Editor
         /// <summary>Persisted node positions for the current root (null if the root has no stable id).</summary>
         private VisualBinderLayoutStore layout;
 
+        /// <summary>True between a rebuild with no saved layout and the first resolved-geometry frame.</summary>
+        private bool autoArrangePending;
+
         public VisualBinderGraphView()
         {
             style.flexGrow = 1;
@@ -63,11 +66,93 @@ namespace Uice.VisualBinder.Editor
                 BuildViewModelNodes(root);
                 BuildBinderNodes(root);
                 ConnectAllBindings();
+
+                // No saved positions yet → arrange once geometry resolves (first open of a hierarchy).
+                autoArrangePending = layout == null || layout.IsEmpty;
             }
             finally
             {
                 suppressChanges = false;
             }
+
+            if (autoArrangePending)
+            {
+                ScheduleAutoArrange(0);
+            }
+        }
+
+        /// <summary>
+        /// Polls until nodes have a resolved size (UI Toolkit lays them out asynchronously), then
+        /// runs the auto-arrange once. Bounded so it can't loop forever.
+        /// </summary>
+        private void ScheduleAutoArrange(int attempt)
+        {
+            const int maxAttempts = 30;
+
+            schedule.Execute(() =>
+            {
+                if (!autoArrangePending)
+                {
+                    return;
+                }
+
+                if (nodes.ToList().Any(n => n.layout.height > 1f))
+                {
+                    autoArrangePending = false;
+                    ArrangeNodes();
+                }
+                else if (attempt < maxAttempts)
+                {
+                    ScheduleAutoArrange(attempt + 1);
+                }
+                else
+                {
+                    autoArrangePending = false; // give up; manual Arrange button still works
+                }
+            }).StartingIn(16);
+        }
+
+        /// <summary>Lays nodes out in connectivity-based columns (left→right) and persists the result.</summary>
+        public void ArrangeNodes()
+        {
+            List<Node> nodeList = nodes.ToList();
+            if (nodeList.Count == 0)
+            {
+                return;
+            }
+
+            Dictionary<Node, Rect> positions = GraphAutoLayout.Compute(nodeList, edges.ToList(), SizeOf);
+
+            bool dirty = false;
+            foreach (KeyValuePair<Node, Rect> entry in positions)
+            {
+                entry.Key.SetPosition(entry.Value);
+
+                if (entry.Key is IComponentNode componentNode && layout != null)
+                {
+                    string key = VisualBinderLayoutStore.GetKey(componentNode.Component);
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        layout.Set(key, entry.Value);
+                        dirty = true;
+                    }
+                }
+            }
+
+            if (dirty)
+            {
+                layout.Save();
+            }
+
+            schedule.Execute(() => FrameAll());
+        }
+
+        /// <summary>Resolved node size, falling back to estimates before the first layout pass.</summary>
+        private static Vector2 SizeOf(Node node)
+        {
+            float width = node.layout.width > 1f ? node.layout.width : NodeWidth;
+            float height = node.layout.height > 1f ? node.layout.height : EstimateHeight(node);
+            return new Vector2(width, height);
         }
 
         private void BuildViewModelNodes(GameObject root)

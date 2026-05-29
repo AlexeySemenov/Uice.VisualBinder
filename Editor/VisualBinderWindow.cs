@@ -69,6 +69,10 @@ namespace Uice.VisualBinder.Editor
             var refreshButton = new ToolbarButton(Rebuild) { text = "Refresh" };
             toolbar.Add(refreshButton);
 
+            var arrangeButton = new ToolbarButton(() => graphView.ArrangeNodes()) { text = "Arrange" };
+            arrangeButton.tooltip = "Lay out nodes in left-to-right columns by their connections";
+            toolbar.Add(arrangeButton);
+
             var addMenu = new ToolbarMenu { text = "Add Binder" };
             foreach (Type binderType in BindingReflection.GetBinderTypes())
             {
