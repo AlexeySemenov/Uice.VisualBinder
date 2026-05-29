@@ -73,6 +73,10 @@ namespace Uice.VisualBinder.Editor
             arrangeButton.tooltip = "Lay out nodes in left-to-right columns by their connections";
             toolbar.Add(arrangeButton);
 
+            var groupButton = new ToolbarButton(() => graphView.GroupSelection()) { text = "Group Selection" };
+            groupButton.tooltip = "Group the selected nodes into a collapsible box";
+            toolbar.Add(groupButton);
+
             var addMenu = new ToolbarMenu { text = "Add Binder" };
             foreach (Type binderType in BindingReflection.GetBinderTypes())
             {

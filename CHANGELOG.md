@@ -4,6 +4,19 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-05-29
+
+### Added
+- **Manual node groups.** Select nodes and **Group Selection** (toolbar or right-click) to wrap them
+  in a titled, renamable box that moves as one. Groups, titles, membership, collapsed state and
+  positions persist per root.
+- **Collapsible groups with proxy edges.** Collapse a group (right-click ▸ Collapse) to hide its
+  members and internal wiring behind a compact proxy node; bindings that cross the group boundary are
+  re-drawn as proxy edges to ports on that proxy node (including group-to-group), so external
+  connections stay visible. Expand via right-click or double-click the proxy.
+- Arrange now leaves grouped nodes (and group/proxy boxes) where they are and only auto-arranges the
+  ungrouped nodes.
+
 ## [0.3.0] - 2026-05-29
 
 ### Added
