@@ -31,8 +31,8 @@ namespace Uice.VisualBinder.Editor
         /// <summary>True between a rebuild with no saved layout and the first resolved-geometry frame.</summary>
         private bool autoArrangePending;
 
-        /// <summary>Persisted manual groups for the current root (null if the root has no stable id).</summary>
-        private VisualBinderGroupStore groupStore;
+        /// <summary>Same instance as <see cref="layout"/> — groups + positions share one per-root file.</summary>
+        private VisualBinderLayoutStore groupStore;
 
         private readonly Dictionary<string, CollapsibleGroup> groupsById = new Dictionary<string, CollapsibleGroup>();
         private readonly Dictionary<string, GroupProxyNode> proxyNodesById = new Dictionary<string, GroupProxyNode>();
@@ -77,7 +77,7 @@ namespace Uice.VisualBinder.Editor
                 }
 
                 layout = VisualBinderLayoutStore.ForRoot(root);
-                groupStore = VisualBinderGroupStore.ForRoot(root);
+                groupStore = layout; // positions + groups persist together in one per-root file
 
                 BuildViewModelNodes(root);
                 BuildBinderNodes(root);

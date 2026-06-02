@@ -1,6 +1,6 @@
 {
   "name": "com.aleshmandr.uice.visualbinder",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "displayName": "Uice Visual Binder",
   "description": "A UI Toolkit GraphView editor for authoring and visualizing Mace/Uice data bindings as a node graph, instead of scattered binder components. Requires com.aleshmandr.uice and com.aleshmandr.mace to be present in the project.",
   "unity": "2022.3",

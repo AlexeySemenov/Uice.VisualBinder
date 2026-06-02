@@ -4,6 +4,15 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-05-29
+
+### Changed
+- **Graph layout is now committable/shareable.** Node positions and groups are stored in a JSON file
+  per view at `Assets/Editor/UiceVisualBinder/GraphLayouts/<hash>.json` (keyed by the root's
+  GlobalObjectId) instead of per-user `EditorPrefs`. Commit the file and teammates see the same
+  arrangement. Existing local layouts are auto-migrated into a file on first open. (The Fields
+  foldout's open/closed state stays in EditorPrefs as local UI preference.)
+
 ## [0.4.1] - 2026-05-29
 
 ### Fixed
