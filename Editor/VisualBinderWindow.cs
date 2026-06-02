@@ -77,6 +77,10 @@ namespace Uice.VisualBinder.Editor
             groupButton.tooltip = "Group the selected nodes into a collapsible box";
             toolbar.Add(groupButton);
 
+            var conflictsButton = new ToolbarButton(FindConflicts) { text = "Find Conflicts" };
+            conflictsButton.tooltip = "Highlight binders that drive the same target (e.g. two ActivateGameObjectBinders on one GameObject)";
+            toolbar.Add(conflictsButton);
+
             var addMenu = new ToolbarMenu { text = "Add Binder" };
             foreach (Type binderType in BindingReflection.GetBinderTypes())
             {
@@ -141,6 +145,14 @@ namespace Uice.VisualBinder.Editor
         private void Rebuild()
         {
             graphView?.Rebuild(root);
+        }
+
+        private void FindConflicts()
+        {
+            int count = graphView != null ? graphView.HighlightConflicts() : 0;
+            ShowNotification(new GUIContent(count == 0
+                ? "No conflicts found"
+                : $"{count} conflicting binder(s) highlighted"));
         }
     }
 }

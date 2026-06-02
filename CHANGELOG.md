@@ -4,6 +4,18 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-05-29
+
+### Added
+- **Find Conflicts** toolbar button: highlights binder nodes that drive the same target and therefore
+  fight over its state — e.g. two `ActivateGameObjectBinder`s targeting one GameObject, or
+  `EnableBehaviourBinder`s sharing a Behaviour. Detection is generic (any serialized list whose
+  element has a `UnityEngine.Object Target`). Offending nodes get a red border + a tooltip naming the
+  shared target, and are selected and framed; a notification reports the count. Inside the node, the
+  Fields body auto-expands and the **specific list element** referencing the shared target is shown
+  and tinted (the offending list is broken out into its individual elements), so you can jump
+  straight to the exact reference. Cleared on Refresh.
+
 ## [0.5.0] - 2026-05-29
 
 ### Changed

@@ -183,6 +183,37 @@ namespace Uice.VisualBinder.Editor
             schedule.Execute(() => FrameAll());
         }
 
+        /// <summary>
+        /// Highlights binder nodes that fight over the same driven target (e.g. two
+        /// ActivateGameObjectBinders on one GameObject). Returns the number of conflicting binders.
+        /// </summary>
+        public int HighlightConflicts()
+        {
+            List<BinderNode> binderNodes = nodes.ToList().OfType<BinderNode>().ToList();
+            foreach (BinderNode node in binderNodes)
+            {
+                node.ClearConflict();
+            }
+
+            Dictionary<BinderNode, ConflictInfo> conflicts = ConflictDetector.Detect(binderNodes);
+            foreach (KeyValuePair<BinderNode, ConflictInfo> entry in conflicts)
+            {
+                entry.Key.MarkConflict(entry.Value.Reason, entry.Value.Elements);
+            }
+
+            if (conflicts.Count > 0)
+            {
+                ClearSelection();
+                foreach (BinderNode node in conflicts.Keys)
+                {
+                    AddToSelection(node);
+                }
+                FrameSelection();
+            }
+
+            return conflicts.Count;
+        }
+
         /// <summary>Resolved node size, falling back to estimates before the first layout pass.</summary>
         private static Vector2 SizeOf(Node node)
         {

@@ -245,6 +245,10 @@ namespace Uice.VisualBinder.Editor
         /// <summary>Kept alive so the bound PropertyFields in the node body keep updating.</summary>
         private SerializedObject serializedObject;
 
+        private Foldout fieldsFoldout;
+        private readonly Dictionary<string, PropertyField> fieldsByName = new Dictionary<string, PropertyField>();
+        private readonly List<VisualElement> conflictElementViews = new List<VisualElement>();
+
         public BinderNode(Component binder)
         {
             Binder = binder;
@@ -286,7 +290,9 @@ namespace Uice.VisualBinder.Editor
                         continue;
                     }
 
-                    foldout.Add(new PropertyField(iterator.Copy()));
+                    var propertyField = new PropertyField(iterator.Copy());
+                    fieldsByName[iterator.name] = propertyField;
+                    foldout.Add(propertyField);
                     added++;
                 }
                 while (iterator.NextVisible(false));
@@ -296,6 +302,8 @@ namespace Uice.VisualBinder.Editor
             {
                 return;
             }
+
+            fieldsFoldout = foldout;
 
             // Only the foldout's own toggle should persist state — ignore bubbled events from
             // child bool fields (e.g. Toggle PropertyFields) which also raise ChangeEvent<bool>.
@@ -348,6 +356,123 @@ namespace Uice.VisualBinder.Editor
 
             inputContainer.Add(port);
             PortsByPath[slot.PropertyPath] = port;
+        }
+
+        private static readonly Color ConflictTint = new Color(0.45f, 0.12f, 0.12f, 1f);
+
+        /// <summary>
+        /// Highlights this node as conflicting (red border + title tint) with an explanatory tooltip,
+        /// and surfaces the specific list element(s) that reference the shared target — replacing the
+        /// offending list field with the individual elements so the conflicting one is tinted.
+        /// </summary>
+        public void MarkConflict(string reason, Dictionary<string, HashSet<int>> conflictElements)
+        {
+            var red = new Color(0.85f, 0.25f, 0.25f, 1f);
+
+            style.borderTopWidth = 2;
+            style.borderBottomWidth = 2;
+            style.borderLeftWidth = 2;
+            style.borderRightWidth = 2;
+            style.borderTopColor = red;
+            style.borderBottomColor = red;
+            style.borderLeftColor = red;
+            style.borderRightColor = red;
+
+            titleContainer.style.backgroundColor = ConflictTint;
+            tooltip = reason;
+
+            bool anyField = false;
+            if (conflictElements != null)
+            {
+                foreach (KeyValuePair<string, HashSet<int>> entry in conflictElements)
+                {
+                    if (BuildConflictElements(entry.Key, entry.Value, reason))
+                    {
+                        anyField = true;
+                    }
+                }
+            }
+
+            // Reveal the offending element(s) without changing the user's saved foldout preference.
+            if (anyField && fieldsFoldout != null)
+            {
+                fieldsFoldout.SetValueWithoutNotify(true);
+            }
+        }
+
+        /// <summary>
+        /// Hides the whole list field and renders its elements individually so the conflicting
+        /// indices can be tinted. Returns true if it produced a highlight.
+        /// </summary>
+        private bool BuildConflictElements(string fieldName, HashSet<int> indices, string reason)
+        {
+            if (!fieldsByName.TryGetValue(fieldName, out PropertyField original) || serializedObject == null)
+            {
+                return false;
+            }
+
+            SerializedProperty listProperty = serializedObject.FindProperty(fieldName);
+            if (listProperty == null || !listProperty.isArray)
+            {
+                // Not a list (shouldn't happen for these conflicts) — tint the field as a fallback.
+                original.style.backgroundColor = ConflictTint;
+                original.tooltip = reason;
+                return true;
+            }
+
+            original.style.display = DisplayStyle.None;
+
+            var container = new VisualElement();
+            container.Add(new Label(ObjectNames.NicifyVariableName(fieldName)));
+
+            for (int i = 0; i < listProperty.arraySize; i++)
+            {
+                var elementField = new PropertyField(listProperty.GetArrayElementAtIndex(i).Copy(), $"Element {i}");
+                if (indices.Contains(i))
+                {
+                    elementField.style.backgroundColor = ConflictTint;
+                    elementField.tooltip = reason;
+                }
+                container.Add(elementField);
+            }
+
+            container.Bind(serializedObject);
+            fieldsFoldout.Add(container);
+            conflictElementViews.Add(container);
+            return true;
+        }
+
+        public void ClearConflict()
+        {
+            style.borderTopWidth = 0;
+            style.borderBottomWidth = 0;
+            style.borderLeftWidth = 0;
+            style.borderRightWidth = 0;
+            style.borderTopColor = StyleKeyword.Null;
+            style.borderBottomColor = StyleKeyword.Null;
+            style.borderLeftColor = StyleKeyword.Null;
+            style.borderRightColor = StyleKeyword.Null;
+
+            titleContainer.style.backgroundColor = StyleKeyword.Null;
+            tooltip = Binder.GetType().FullName;
+
+            foreach (VisualElement view in conflictElementViews)
+            {
+                view.RemoveFromHierarchy();
+            }
+            conflictElementViews.Clear();
+
+            foreach (PropertyField propertyField in fieldsByName.Values)
+            {
+                propertyField.style.display = StyleKeyword.Null;
+                propertyField.style.backgroundColor = StyleKeyword.Null;
+                propertyField.tooltip = null;
+            }
+
+            if (fieldsFoldout != null)
+            {
+                fieldsFoldout.SetValueWithoutNotify(LoadFieldsExpanded());
+            }
         }
     }
 }
