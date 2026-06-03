@@ -4,6 +4,14 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-05-29
+
+### Fixed
+- Expanding a binder node's **Fields** no longer makes the node grow enormously tall when a field is a
+  list (rendered as a ListView, which reports an unbounded height inside a content-sized graph node).
+  The Fields body is now a height-capped scroll view, so tall content scrolls instead of inflating
+  the node.
+
 ## [0.6.0] - 2026-05-29
 
 ### Added

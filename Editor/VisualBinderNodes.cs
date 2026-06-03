@@ -245,7 +245,10 @@ namespace Uice.VisualBinder.Editor
         /// <summary>Kept alive so the bound PropertyFields in the node body keep updating.</summary>
         private SerializedObject serializedObject;
 
+        private const float FieldsMaxHeight = 320f;
+
         private Foldout fieldsFoldout;
+        private ScrollView fieldsScroll;
         private readonly Dictionary<string, PropertyField> fieldsByName = new Dictionary<string, PropertyField>();
         private readonly List<VisualElement> conflictElementViews = new List<VisualElement>();
 
@@ -279,6 +282,13 @@ namespace Uice.VisualBinder.Editor
 
             var foldout = new Foldout { text = "Fields", value = LoadFieldsExpanded() };
 
+            // Cap the body height and scroll, so a list field (rendered as a ListView, which reports
+            // an unbounded height inside a content-sized GraphView node) can't blow the node up.
+            var scroll = new ScrollView(ScrollViewMode.Vertical);
+            scroll.style.flexGrow = 0;
+            scroll.style.maxHeight = FieldsMaxHeight;
+            foldout.Add(scroll);
+
             int added = 0;
             SerializedProperty iterator = serializedObject.GetIterator();
             if (iterator.NextVisible(true))
@@ -292,7 +302,7 @@ namespace Uice.VisualBinder.Editor
 
                     var propertyField = new PropertyField(iterator.Copy());
                     fieldsByName[iterator.name] = propertyField;
-                    foldout.Add(propertyField);
+                    scroll.Add(propertyField);
                     added++;
                 }
                 while (iterator.NextVisible(false));
@@ -304,6 +314,7 @@ namespace Uice.VisualBinder.Editor
             }
 
             fieldsFoldout = foldout;
+            fieldsScroll = scroll;
 
             // Only the foldout's own toggle should persist state — ignore bubbled events from
             // child bool fields (e.g. Toggle PropertyFields) which also raise ChangeEvent<bool>.
@@ -437,7 +448,7 @@ namespace Uice.VisualBinder.Editor
             }
 
             container.Bind(serializedObject);
-            fieldsFoldout.Add(container);
+            (fieldsScroll ?? (VisualElement)fieldsFoldout).Add(container);
             conflictElementViews.Add(container);
             return true;
         }
